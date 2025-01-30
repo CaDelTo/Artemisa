@@ -3,7 +3,6 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
-import time
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
@@ -23,17 +22,11 @@ driver = webdriver.Chrome(service=service, options=options)
 # Abrir la página
 url = "https://www.colombiaenmapas.gov.co/#"
 driver.get(url)
-
-# Esperar a que el contenido dinámico cargue
-# Esperar a que el contenido dinámico cargue
 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "panel-resultados-titulo2")))
 
-# Extraer elementos específicos
-elementos = driver.find_elements(By.CLASS_NAME, "panel-resultados-titulo2")  # Ajusta el selector CSS
+# Extraer elementos por clase
+elementos = driver.find_elements(By.CLASS_NAME, "panel-resultados-titulo2")
 
-# Mostrar el texto extraído
 for elemento in elementos:
     print(elemento)
-
-# Cerrar el navegador
 driver.quit()
