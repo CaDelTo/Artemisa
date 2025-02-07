@@ -45,14 +45,15 @@ while tematica is None:
 print(f"Selected tematica: {tematica.text}")
 
 # Wait for the media-body element within the selected tematica and click it
-media_body = WebDriverWait(tematica, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "media-body")))
-media_bodies = tematica.find_elements(By.CLASS_NAME, "media-body")
-# Select a random media-body and click it
-#TODO: Hacer que pueda pasar el nombre de la tematica para seleccionarla
-media_body = random.choice(media_bodies)
+# Find the media-body element within the selected tematica
+media_body = tematica.find_element(By.CLASS_NAME, "media-body")
 driver.execute_script("arguments[0].click();", media_body)
+
+a = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "media media-resultados2")))
+for elements in a:
+    print(elements.text)
 
 time.sleep(30)
 
-#TODO: Entrar a todos los elementos de la tematica y sacar la info
+#TODO: Entrar a todos los elementos de la tematica y sacar la info, sacar todos los que sean un servicio, hay tres tipos (WMS, WFS y ARcGIS)
 # media media-resultados2 es el class de los elementos dentro de la tematica
