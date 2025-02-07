@@ -18,42 +18,64 @@ url = "https://www.colombiaenmapas.gov.co/#"
 driver.get(url)
 
 
+# Aceptar los términos y condiciones y cerrar el tutorial
 # Esperar hasta que el elemento con el id "checkTerminos" esté presente y hacer clic en él, luego esperar hasta que el botón de cerrar el tutorial esté presente y hacer clic en él
 # <input type="checkbox" id="checkTerminos">
 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "checkTerminos"))).click()
 # <a href="#" class="close" onclick="cancelTutorial(); return false;" aria-label="Cerrar"><span aria-hidden="true">×</span></a>
 WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a.close[onclick='cancelTutorial(); return false;']"))).click()
 
-# Esperar hasta que el select con el id "searchFiltro" esté presente y obtener todas las opciones del select
+
+# Esperar hasta que el select con el id "searchFiltro" esté presente y obtener todas las opciones del select (Seleccionar Zona)
 # <select class="form-control select2-hidden-accessible" id="searchFiltro" style="width: 100%;font-size: 14px;" data-select2-id="searchFiltro" tabindex="-1" aria-hidden="true">
 select_element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "searchFiltro")))
-
-# Para testeo pongo una aleatoria
 options = select_element.find_elements(By.TAG_NAME, "option")
-option = random.choice(options)
-option.click()
-print(option.text)
+for option in options:
+    if option.text.strip() == "Antioquia":
+        option.click()
+        print(f"Selected zone: {option.text}")
+        break
 
+
+time.sleep(1)
 # <div class="media media-resultados tematica" data-tematica="36" data-tematica-label="poblacion"><
-tematicas = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.media.media-resultados.tematica")))
+tematicas = WebDriverWait(driver, 30).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.media.media-resultados.tematica")))
 # Select a random tematica and click it
+
 tematica = None
-while tematica is None:
-    tematica = random.choice(tematicas)
-    if not tematica.text.strip():  # Check if text is empty or just whitespace
-        tematica = None
+for t in tematicas:
+    if "geodesia" in t.text.lower():
+        tematica = t
+        break
+if tematica is None:
+    raise Exception("No tematica found with text 'geodasia'")
 print(f"Selected tematica: {tematica.text}")
 
-# Wait for the media-body element within the selected tematica and click it
-# Find the media-body element within the selected tematica
+#Darle click a la tematica
 media_body = tematica.find_element(By.CLASS_NAME, "media-body")
 driver.execute_script("arguments[0].click();", media_body)
 
-a = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "media media-resultados2")))
-for elements in a:
-    print(elements.text)
+time.sleep(1)
+elemento_buscar = "Red Pasiva GNSS"  # Specify the element name you want to find
+elementos = WebDriverWait(driver, 30).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.media.media-resultados2")))
 
-time.sleep(30)
+elemento_encontrado = None
+for elemento in elementos:
+    titulo = elemento.find_element(By.CLASS_NAME, "panel-resultados-titulo")
+    print(f"Found element: {titulo.text}")
+    if elemento_buscar.lower() in titulo.text.lower():
+        elemento_encontrado = elemento
+        break
 
-#TODO: Entrar a todos los elementos de la tematica y sacar la info, sacar todos los que sean un servicio, hay tres tipos (WMS, WFS y ARcGIS)
-# media media-resultados2 es el class de los elementos dentro de la tematica
+if elemento_encontrado:
+    driver.execute_script("arguments[0].click();", elemento_encontrado)
+    print(f"Clicked on: {elemento_buscar}")
+else:
+    print(f"Element '{elemento_buscar}' not found")
+
+servicios = WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.CSS_SELECTOR, "ul#enlacesContainer")))
+servicios_list = servicios.find_elements(By.CSS_SELECTOR, "li")
+for item in servicios_list:
+    links = item.find_elements(By.TAG_NAME, "a")
+    for link in links:
+        print(link.get_attribute("href"))
