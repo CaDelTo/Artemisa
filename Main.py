@@ -22,7 +22,8 @@ def getServiceLinks(zoneName, targetTopic, targetService, linkType=None):
     """
     # Browser setup
     chromeOptions = Options()
-    chromeOptions.add_argument("--start-maximized")
+    chromeOptions.add_argument("--headless=new")
+    chromeOptions.add_argument("--window-size=1920,1080")
     driver = webdriver.Chrome(
         service=Service(ChromeDriverManager().install()),
         options=chromeOptions
