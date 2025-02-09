@@ -7,20 +7,45 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
+def handle_terms_and_conditions(driver):
+    """Handles initial legal agreements and tutorial popups"""
+    try:
+        WebDriverWait(driver, 15).until(
+            EC.element_to_be_clickable((By.ID, "checkTerminos"))).click()
+        WebDriverWait(driver, 15).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "a.close[onclick='cancelTutorial(); return false;']"))).click()
+    except Exception as e:
+        raise RuntimeError("Failed to accept terms and conditions") from e
+
 def getServiceLinks(zoneName, targetTopic, targetService, linkType=None):
     """
-    Retrieves service links from Colombia en Mapas platform
+    Retrieves geographic service links from Colombia en Mapas platform
+    (Official IGAC mapping service: https://www.colombiaenmapas.gov.co)
     
     Args:
-        zoneName (str): Name of the geographic zone/department
-        targetTopic (str): Desired map topic/category
-        targetService (str): Specific service to retrieve links from
-        linkType (str, optional): Filter for specific link type (e.g., 'wms')
+        zoneName (str): Name of the department/geographic zone (case-insensitive)
+        targetTopic (str): Map category/topic (e.g., 'Geodesia', 'Transporte')
+        targetService (str): Specific service layer name (e.g., 'Red Pasiva GNSS')
+        linkType (str, optional): Service type filter (e.g., 'wms', 'wfs')
     
     Returns:
-        list: Filtered service URLs
+        list: Filtered list of service URLs
+        
+    Raises:
+        ValueError: For missing elements or invalid parameters
+        RuntimeError: For browser-related failures
+    
+    Example:
+        >>> links = getServiceLinks(
+                zoneName="Antioquia",
+                targetTopic="Geodesia",
+                targetService="Red Pasiva GNSS",
+                linkType="wms"
+            )
+        >>> for link in links:
+                print(link)
     """
-    # Browser setup
+    # Browser setup (Don't touch this, keep this configuration)
     chromeOptions = Options()
     chromeOptions.add_argument("--headless=new")
     chromeOptions.add_argument("--window-size=1920,1080")
@@ -30,100 +55,122 @@ def getServiceLinks(zoneName, targetTopic, targetService, linkType=None):
     )
 
     try:
-        # Initialize session
         driver.get("https://www.colombiaenmapas.gov.co/#")
-
-        # Handle initial dialogs
-        WebDriverWait(driver, 15).until(
-            EC.element_to_be_clickable((By.ID, "checkTerminos"))).click()
-        WebDriverWait(driver, 15).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "a.close[onclick='cancelTutorial(); return false;']"))).click()
-
-        # Zone selection logic
-        zoneSelector = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.ID, "searchFiltro")))
         
-        # Find zone by name
-        zoneOptions = zoneSelector.find_elements(By.TAG_NAME, "option")
-        zoneCode = None
-        
-        for option in zoneOptions:
-            if option.text.strip().lower() == zoneName.strip().lower():
-                zoneCode = option.get_attribute("value")
-                break
+        # Handle legal agreements
+        handle_terms_and_conditions(driver)
 
-        if not zoneCode:
-            raise ValueError(f"Zone '{zoneName}' not found in available options")
-        
-        driver.execute_script(f"""
-            arguments[0].value = '{zoneCode}';
-            arguments[0].dispatchEvent(new Event('change'))
-        """, zoneSelector)
-
-        # Wait for content load
+        # Zone selection with error context
         time.sleep(1)
-
-        # Topic selection
-        topicXpath = f"""
-            //div[contains(@class, 'tematica') 
-            and contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 
-            '{targetTopic.lower()}')]
-        """
-        topicElement = WebDriverWait(driver, 15).until(
-            EC.presence_of_element_located((By.XPATH, topicXpath)))
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", topicElement)
-        topicElement.click()
-
-        # Service selection
-        serviceXpath = f"""
-            //div[contains(@class, 'media-resultados2')]//*
-            [contains(translate(normalize-space(.), 
-            'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 
-            'abcdefghijklmnopqrstuvwxyz'), 
-            '{targetService.lower()}')]
-        """
-        serviceElement = WebDriverWait(driver, 20).until(
-            EC.element_to_be_clickable((By.XPATH, serviceXpath)))
-        
-        driver.execute_script("""
-            arguments[0].scrollIntoView({
-                behavior: 'smooth',
-                block: 'center'
-            });
-        """, serviceElement)
-        time.sleep(0.5)
-        driver.execute_script("arguments[0].click();", serviceElement)
-
-        # Link extraction and filtering
-        linkContainer = WebDriverWait(driver, 15).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "ul#enlacesContainer")))
-        
-        allLinks = linkContainer.find_elements(By.CSS_SELECTOR, "a[href]")
-        filteredLinks = []
-        
-        for link in allLinks:
-            url = link.get_attribute("href")
-            linkText = link.text.lower()
+        try:
+            print("Selecting zone...")
+            zoneSelector = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.ID, "searchFiltro")))
             
-            if linkType:
-                if linkType.lower() in url.lower() or linkType.lower() in linkText:
+            zoneOptions = zoneSelector.find_elements(By.TAG_NAME, "option")
+            zoneCode = None
+            
+            for option in zoneOptions:
+                if option.text.strip().lower() == zoneName.strip().lower():
+                    zoneCode = option.get_attribute("value")
+                    break
+
+            if not zoneCode:
+                available_zones = [opt.text.strip() for opt in zoneOptions]
+                raise ValueError(
+                    f"Zone '{zoneName}' not found. Available options: {', '.join(available_zones)}"
+                )
+            
+            driver.execute_script(f"""
+                arguments[0].value = '{zoneCode}';
+                arguments[0].dispatchEvent(new Event('change'))
+            """, zoneSelector)
+            
+            # Wait for content load
+            time.sleep(1)
+
+        except Exception as e:
+            raise ValueError(f"Zone selection failed: {str(e)}") from e
+
+        # Topic selection with error context
+        try:
+            print("Selecting topic...")
+            topicXpath = f"""
+                //div[contains(@class, 'tematica') 
+                and contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 
+                '{targetTopic.lower()}')]
+            """
+            topicElement = WebDriverWait(driver, 15).until(
+                EC.presence_of_element_located((By.XPATH, topicXpath)))
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", topicElement)
+            topicElement.click()
+        except Exception as e:
+            raise ValueError(f"Topic '{targetTopic}' not found") from e
+
+        # Service selection with error context
+        try:
+            print("Selecting service...")
+            serviceXpath = f"""
+                //div[contains(@class, 'media-resultados2')]//*
+                [contains(translate(normalize-space(.), 
+                'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 
+                'abcdefghijklmnopqrstuvwxyz'), 
+                '{targetService.lower()}')]
+            """
+            serviceElement = WebDriverWait(driver, 20).until(
+                EC.element_to_be_clickable((By.XPATH, serviceXpath)))
+            
+            driver.execute_script("""
+                arguments[0].scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            """, serviceElement)
+            time.sleep(0.5)
+            driver.execute_script("arguments[0].click();", serviceElement)
+        except Exception as e:
+            raise ValueError(f"Service '{targetService}' not found") from e
+
+        # Link processing with error context
+        try:
+            print("Extracting links...")
+            linkContainer = WebDriverWait(driver, 15).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "ul#enlacesContainer")))
+            
+            allLinks = linkContainer.find_elements(By.CSS_SELECTOR, "a[href]")
+            
+            if not allLinks:
+                raise ValueError("No links found")
+            
+            filteredLinks = []
+            for link in allLinks:
+                url = link.get_attribute("href")
+                linkText = link.text.lower()
+                
+                if linkType:
+                    if linkType.lower() in url.lower() or linkType.lower() in linkText:
+                        filteredLinks.append(url)
+                else:
                     filteredLinks.append(url)
-            else:
-                filteredLinks.append(url)
-        
-        return filteredLinks
+            
+            if linkType and not filteredLinks:
+                raise ValueError(f"No '{linkType}' links found")
+            
+            return filteredLinks
+
+        except Exception as e:
+            raise RuntimeError("Link extraction failed") from e
 
     finally:
-        time.sleep(2)
         driver.quit()
 
-# Configuration (modify these values)
+# Configuration
 selectedZone = "Antioquia"
 selectedTopic = "geodesia"
 selectedService = "Red Pasiva GNSS"
 requestedLinkType = "wms"
 
-# Execution example
+# Execution
 try:
     serviceLinks = getServiceLinks(
         zoneName=selectedZone,
@@ -132,11 +179,16 @@ try:
         linkType=requestedLinkType
     )
 
-    print(f"\n{len(serviceLinks)} {requestedLinkType.upper()} links found:")
-    for index, link in enumerate(serviceLinks, 1):
-        print(f"{index}. {link}")
+    for link in serviceLinks:
+        print(link)
 
 except ValueError as error:
-    print(f"\nConfiguration error: {str(error)}")
+    print(f"\nCONFIGURATION ERROR: {error}")
+    if error.__cause__:
+        print(f"Technical details: {error.__cause__}")
+except RuntimeError as error:
+    print(f"\nOPERATIONAL ERROR: {error}")
+    if error.__cause__:
+        print(f"Technical details: {error.__cause__}")
 except Exception as error:
-    print(f"\nRuntime error: {str(error)}")
+    print(f"\nUNEXPECTED ERROR: {type(error).__name__} - {error}")
