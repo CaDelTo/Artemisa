@@ -7,7 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
-def handle_terms_and_conditions(driver):
+def handleTermsConditions(driver):
     """Handles initial legal agreements and tutorial popups"""
     try:
         WebDriverWait(driver, 15).until(
@@ -58,7 +58,7 @@ def getServiceLinks(zoneName, targetTopic, targetService, linkType=None):
         driver.get("https://www.colombiaenmapas.gov.co/#")
         
         # Handle legal agreements
-        handle_terms_and_conditions(driver)
+        handleTermsConditions(driver)
 
         # Zone selection with error context
         time.sleep(1)
