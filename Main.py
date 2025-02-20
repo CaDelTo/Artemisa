@@ -7,6 +7,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
+
+#TODO ARCGIS SOLO DICE SERVICIO, CORTAR HASTA MAPSERVER
+
+
 def handleTermsConditions(driver):
     """Handles initial legal agreements and tutorial popups"""
     try:
@@ -146,17 +150,38 @@ def getServiceLinks(zoneName, targetTopic, targetService, linkType=None):
             for link in allLinks:
                 url = link.get_attribute("href")
                 linkText = link.text.lower()
+                if not linkType:
+                    filteredLinks.append(url)
+                    continue
+
+                link_type_lower = linkType.strip().lower()
                 
-                if linkType:
-                    if linkType.lower() in url.lower() or linkType.lower() in linkText:
-                        filteredLinks.append(url)
-                else:
+                # Handle special cases
+                if link_type_lower == "arcgis" and "servicio" in linkText:
+                    filteredLinks.append(url)
+                elif link_type_lower in ["wms", "wfs"] and f"Servicio ({linkType.upper()})" in linkText:
+                    filteredLinks.append(url)
+                # Generic case - search in both URL and link text
+                elif link_type_lower in url.lower() or link_type_lower in linkText:
                     filteredLinks.append(url)
             
             if linkType and not filteredLinks:
                 raise ValueError(f"No '{linkType}' links found")
+
+            processed_links = []
+            for url in filteredLinks:
+                if "MapServer" in url:
+                    index = url.find("MapServer")
+                    truncated = url[:index + len("MapServer")]
+                    processed_links.append(truncated)
+                elif "FeatureServer" in url:
+                    index = url.find("FeatureServer")
+                    truncated = url[:index + len("FeatureServer")]
+                    processed_links.append(truncated)
+                else:
+                    processed_links.append(url)
             
-            return filteredLinks
+            return processed_links
 
         except Exception as e:
             raise RuntimeError("Link extraction failed") from e
@@ -164,13 +189,12 @@ def getServiceLinks(zoneName, targetTopic, targetService, linkType=None):
     finally:
         driver.quit()
 
-# Configuration
-selectedZone = "Antioquia"
+# Parametros
+selectedZone = "Colombia"
 selectedTopic = "geodesia"
 selectedService = "Red Pasiva GNSS"
-requestedLinkType = "wms"
+requestedLinkType = " wms"
 
-# Execution
 try:
     serviceLinks = getServiceLinks(
         zoneName=selectedZone,
