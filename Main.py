@@ -8,9 +8,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
 
-#TODO ARCGIS SOLO DICE SERVICIO, CORTAR HASTA MAPSERVER
-
-
 def handleTermsConditions(driver):
     """Handles initial legal agreements and tutorial popups"""
     try:
