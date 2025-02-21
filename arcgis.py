@@ -81,7 +81,7 @@ def arcgis_query(url, lat_min, lon_min, lat_max, lon_max, CRS = "EPSG:4326", dow
             datos_dict[f"capa_{capa}"] = []
 
     if download:
-        with open("datos.geojson", "w", encoding="utf-8") as f:
+        with open("datos_ArcGis.geojson", "w", encoding="utf-8") as f:
             json.dump(datos_dict, f, indent=4, ensure_ascii=False)
         return "Archivo GeoJSON guardado como 'datos.geojson'"
 
