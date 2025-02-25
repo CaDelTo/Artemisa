@@ -4,20 +4,19 @@ from pyproj import Transformer
 
 def wfs_query(url, polygon_coords=None, CRS="EPSG:3857", download=False):
     """
-    Obtiene datos geoespaciales de todas las capas disponibles en un servicio WFS de IGAC.
-    Si no se proporcionan coordenadas, obtiene todos los datos disponibles con where=1=1.
+    Gets geospatial data from all available layers in an IGAC WFS service.
+    If no coordinates are provided, gets all available data.
 
-    Parámetros:
-        url (str): URL del servicio WFS.
-        polygon_coords (list, opcional): Lista de coordenadas del polígono en formato [[lon, lat], [lon, lat], ...].
-        CRS (str, opcional): Código EPSG del sistema de referencia de coordenadas. Por defecto "EPSG:3857".
-        download (bool, opcional): Indica si se debe guardar el resultado como archivo GeoJSON. Por defecto False.
+    Parameters:
+        url (str): WFS service URL.
+        polygon_coords (list, optional): List of polygon coordinates in format [[lon, lat], [lon, lat], ...].
+        CRS (str, optional): EPSG code of the coordinate reference system. Default "EPSG:3857".
+        download (bool, optional): Indicates if result should be saved as GeoJSON file. Default False.
 
-    Retorna:
-        list o str: Lista de características geoespaciales si `download` es False.
-                    Mensaje de confirmación si `download` es True.
+    Returns:
+        list or str: List of geospatial features if `download` is False.
+                     Confirmation message if `download` is True.
     """
-
 
     if polygon_coords and CRS not in ["EPSG:3857", "EPSG:102100"]:
         transformer = Transformer.from_crs(CRS, "EPSG:3857", always_xy=True)
@@ -25,16 +24,15 @@ def wfs_query(url, polygon_coords=None, CRS="EPSG:3857", download=False):
 
     response = requests.get(f"{url}?f=json")
     if response.status_code != 200:
-        print("Error al obtener información del servicio:", response.status_code)
-        return None
+        return f"Error getting service information: {response.status_code}"
 
-    servicio_info = response.json()
-    capas_disponibles = [capa["id"] for capa in servicio_info.get("layers", [])]
+    service_info = response.json()
+    available_layers = [layer["id"] for layer in service_info.get("layers", [])]
 
-    if not capas_disponibles:
-        return "No se encontraron capas disponibles en el servicio."
+    if not available_layers:
+        return "No layers found in the service."
 
-    datos_dict = {}
+    data_dict = {}
 
     polygon_geometry = None
     if polygon_coords:
@@ -43,8 +41,8 @@ def wfs_query(url, polygon_coords=None, CRS="EPSG:3857", download=False):
             "spatialReference": {"wkid": 102100, "latestWkid": 3857}
         }
 
-    for capa in capas_disponibles:
-        capa_url = f"{url}/{capa}/query"
+    for layer in available_layers:
+        layer_url = f"{url}/{layer}/query"
 
         params = {
             "f": "json",
@@ -59,25 +57,26 @@ def wfs_query(url, polygon_coords=None, CRS="EPSG:3857", download=False):
         else:
             params["where"] = "1=1"
 
-        response = requests.get(capa_url, params=params)
+        response = requests.get(layer_url, params=params)
         if response.status_code == 200:
-            datos_dict[f"capa_{capa}"] = response.json()
+            data_dict[f"layer_{layer}"] = response.json()
         else:
-            print(f"Error al obtener datos de la capa {capa}: {response.status_code}")
-            datos_dict[f"capa_{capa}"] = {}
+            print(f"Error getting data from layer {layer}: {response.status_code}")
+            data_dict[f"layer_{layer}"] = {}
 
-    features = [datos_dict[capa]["features"] for capa in datos_dict if "features" in datos_dict[capa] and datos_dict[capa]["features"]]
+    features = [data_dict[layer]["features"] for layer in data_dict if "features" in data_dict[layer] and data_dict[layer]["features"]]
 
     if download:
         geojson = {
-            "features": [feature for lista in features for feature in lista]
+            "features": [feature for sublist in features for feature in sublist]
         }
-        with open("datos_WFS.geojson", "w", encoding="utf-8") as f:
+        with open("WFS_data.geojson", "w", encoding="utf-8") as f:
             json.dump(geojson, f, indent=4, ensure_ascii=False)
-        return "Archivo GeoJSON guardado como 'datos_WFS.geojson'"
+        return "GeoJSON file saved as 'WFS_data.geojson'"
 
     return features
 
+#Ej de uso
 url_igac = "https://mapas2.igac.gov.co/server/rest/services/geodesia/redgravimetrica/MapServer"
 polygon_coords = [
     [-74.12, 4.65],  # Punto 1
