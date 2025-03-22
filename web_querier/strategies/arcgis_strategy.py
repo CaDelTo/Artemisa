@@ -1,13 +1,15 @@
 import requests
 import json
-from web_querier.utils import transform_coordinates
-from .base_strategy import BaseStrategy
+from web_querier.utils.transformer import transform_coordinates
+from web_querier.utils.validators import validate_polygon
+from web_querier.strategies.base_strategy import BaseStrategy
 
 class ArcGisStrategy(BaseStrategy):
 
     def get_data(self, url, polygon=None, CRS="EPSG:4326", download=False):
+        
 
-        if polygon and CRS != "EPSG:4326":
+        if validate_polygon(polygon) and CRS != "EPSG:4326":
             polygon = transform_coordinates(polygon, CRS, "EPSG:4326")
 
         response = requests.get(f"{url}?f=json")

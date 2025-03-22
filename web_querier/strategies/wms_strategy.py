@@ -2,7 +2,7 @@ import requests
 from io import BytesIO
 from PIL import Image
 from web_querier.utils import transform_coordinates
-from .base_strategy import BaseStrategy
+from web_querier.strategies.base_strategy import BaseStrategy
 
 class WMSStrategy(BaseStrategy):
     

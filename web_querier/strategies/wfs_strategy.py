@@ -1,13 +1,14 @@
 import requests
 import json
-from web_querier.utils import transform_coordinates
-from .base_strategy import BaseStrategy
+from web_querier.utils.transformer import transform_coordinates
+from web_querier.utils.validators import validate_polygon
+from web_querier.strategies.base_strategy import BaseStrategy
 
 class WFSStrategy(BaseStrategy):
 
     def get_data(self, url, polygon, crs="EPSG:3857", download=False):
         
-        if polygon and crs not in ["EPSG:3857", "EPSG:102100"]:
+        if validate_polygon(polygon) and crs not in ["EPSG:3857", "EPSG:102100"]:
             polygon = transform_coordinates(polygon, crs, "EPSG:3857")
 
         response = requests.get(f"{url}?f=json")
