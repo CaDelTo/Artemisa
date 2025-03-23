@@ -1,34 +1,32 @@
-from .strategies import WMSStrategy, WFSStrategy, ArcGisStrategy
+from .strategies.wms_strategy import WMSStrategy
+from .strategies.wfs_strategy import WFSStrategy
+from .strategies.arcgis_strategy import ArcGisStrategy
 
 class DataWebQuerier:
-    def __init__(self, strategy_type):
-        """
-        Inicializa el querier con una estrategia específica.
+    """
+    Consulta datos desde una fuente web usando diferentes estrategias (WMS, WFS, ArcGIS).
+    """
 
-        Parámetros:
-            strategy_type (str): Tipo de estrategia a usar ('wms', 'wfs' o 'arcgis').
-        """
-        self.strategy = self._get_strategy(strategy_type)
-
-    def _get_strategy(self, strategy_type):
-        """Devuelve la estrategia adecuada según el tipo proporcionado."""
-        strategies = {
-            "wms": WMSStrategy,
-            "wfs": WFSStrategy,
-            "arcgis": ArcGisStrategy
+    def __init__(self):
+        self.strategies = {
+            "wms": WMSStrategy(),
+            "wfs": WFSStrategy(),
+            "arcgis": ArcGisStrategy(),
         }
-        if strategy_type not in strategies:
-            raise ValueError(f"Estrategia '{strategy_type}' no válida. Usa: {list(strategies.keys())}")
-        return strategies[strategy_type]()
 
-    def get_data(self, **kwargs):
+    def get_data(self, strategy_type, **kwargs):
         """
-        Obtiene datos según la estrategia seleccionada.
+        Obtiene datos usando la estrategia especificada.
 
-        Parámetros:
-            kwargs: Argumentos específicos de cada estrategia.
+        Args:
+            strategy_type (str): Tipo de estrategia ('wms', 'wfs', 'arcgis').
+            **kwargs: Parámetros específicos para cada estrategia.
 
-        Retorna:
-            Datos obtenidos según la estrategia utilizada.
+        Returns:
+            list: Datos obtenidos de la fuente.
         """
-        return self.strategy.get_data(**kwargs)
+        if strategy_type not in self.strategies:
+            raise ValueError(f"Estrategia no soportada: {strategy_type}")
+
+        strategy = self.strategies[strategy_type]
+        return strategy.get_data(**kwargs)

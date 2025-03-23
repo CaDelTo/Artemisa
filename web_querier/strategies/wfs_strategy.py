@@ -6,10 +6,10 @@ from web_querier.strategies.base_strategy import BaseStrategy
 
 class WFSStrategy(BaseStrategy):
 
-    def get_data(self, url, polygon, crs="EPSG:3857", download=False):
+    def get_data(self, url, polygon, CRS="EPSG:3857", download=False):
         
-        if validate_polygon(polygon) and crs not in ["EPSG:3857", "EPSG:102100"]:
-            polygon = transform_coordinates(polygon, crs, "EPSG:3857")
+        if validate_polygon(polygon) and CRS not in ["EPSG:3857", "EPSG:102100"]:
+            polygon = transform_coordinates(polygon, CRS, "EPSG:3857")
 
         response = requests.get(f"{url}?f=json")
         if response.status_code != 200:

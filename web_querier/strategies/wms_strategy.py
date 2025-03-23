@@ -1,7 +1,8 @@
 import requests
 from io import BytesIO
 from PIL import Image
-from web_querier.utils import transform_coordinates
+from web_querier.utils.transformer import transform_coordinates
+from web_querier.utils.validators import validate_bbox
 from web_querier.strategies.base_strategy import BaseStrategy
 
 class WMSStrategy(BaseStrategy):
@@ -18,6 +19,7 @@ class WMSStrategy(BaseStrategy):
                 lon_min, lat_min, lon_max, lat_max = transform_coordinates(
                     (lon_min, lat_min, lon_max, lat_max), CRS, "EPSG:3857"
                 )
+            validate_bbox(lat_min, lon_min, lat_max, lon_max)
             bbox = f"{lon_min},{lat_min},{lon_max},{lat_max}"
             bbox_sr = "102100"
             image_sr = "102100"
