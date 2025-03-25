@@ -4,6 +4,7 @@ class DataRetriever:
 
     def __init__(self):
         self.web_querier = DataWebQuerier()
+        #TODO: Implementar self.db_querier = DataDBQuerier()
     
     def get_data(self, **kwargs):
         """
@@ -16,4 +17,11 @@ class DataRetriever:
         Retorna:
             Datos obtenidos de la fuente de datos.
         """
-        return self.web_querier.get_data(**kwargs)
+        try:
+            data = self.web_querier.get_data(**kwargs)
+            return data
+        except ValueError as e:
+            return str(e)
+        
+        #TODO: Implementar except para DataDBQuerier
+        return 
