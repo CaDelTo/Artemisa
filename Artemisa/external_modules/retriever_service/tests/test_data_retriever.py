@@ -1,4 +1,4 @@
-from data_retriever.data_retriever import DataRetriever
+from retriever_service.data_retriever import DataRetriever
 
 def test_data_retriever_wfs():
     retriever = DataRetriever()

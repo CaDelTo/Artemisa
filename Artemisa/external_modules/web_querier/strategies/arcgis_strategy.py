@@ -1,8 +1,8 @@
 import requests
 import json
-from web_querier.utils.transformer import transform_coordinates
-from web_querier.utils.validators import validate_polygon
-from web_querier.strategies.base_strategy import BaseStrategy
+from external_modules.web_querier.utils.transformer import transform_coordinates
+from external_modules.web_querier.utils.validators import validate_polygon
+from external_modules.web_querier.strategies.base_strategy import BaseStrategy
 
 class ArcGisStrategy(BaseStrategy):
 

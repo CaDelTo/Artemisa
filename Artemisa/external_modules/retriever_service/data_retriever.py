@@ -1,4 +1,4 @@
-from web_querier.data_web_querier import DataWebQuerier
+from external_modules.web_querier.data_web_querier import DataWebQuerier
 
 class DataRetriever:
 

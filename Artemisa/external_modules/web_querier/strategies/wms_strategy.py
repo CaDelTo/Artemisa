@@ -1,9 +1,9 @@
 import requests
 from io import BytesIO
 from PIL import Image
-from web_querier.utils.transformer import transform_coordinates
-from web_querier.utils.validators import validate_bbox
-from web_querier.strategies.base_strategy import BaseStrategy
+from external_modules.web_querier.utils.transformer import transform_coordinates
+from external_modules.web_querier.utils.validators import validate_bbox
+from external_modules.web_querier.strategies.base_strategy import BaseStrategy
 
 class WMSStrategy(BaseStrategy):
     
