@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'data_retriever',
+    'drf_yasg',  # Swagger UI for API documentation
 ]
 
 MIDDLEWARE = [
